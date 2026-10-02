@@ -125,6 +125,28 @@ where to look when you get stuck.
 | `src/SimpleStablecoin.sol` | **The stablecoin itself.** ERC-20 + `MINTER_ROLE` (who may mint) + `PAUSER_ROLE` (whether transfers are frozen) |
 | `src/Vault.sol` | **The loop.** Deposit collateral to mint 1:1; burn to take collateral back |
 
+### Architecture diagram
+
+```mermaid
+flowchart LR
+    User[User]
+    USDC[MockUSDC collateral]
+    Vault[Vault]
+    SUSD[SimpleStablecoin sUSD]
+    Admin[Admin / role holder]
+
+    User -- faucet / holds --> USDC
+    User -- approve + deposit USDC --> Vault
+    Vault -- transferFrom USDC --> USDC
+    Vault -- mint sUSD --> SUSD
+    SUSD -- balance to user --> User
+    User -- redeem sUSD --> Vault
+    Vault -- burn sUSD --> SUSD
+    Vault -- return USDC --> User
+    Admin -- grants MINTER_ROLE --> Vault
+    Admin -- may pause / grant roles --> SUSD
+```
+
 The key invariant: **`vault.totalCollateral() == stable.totalSupply()`**
 
 As long as that equation holds, every coin is fully backed. The moment someone can mint out of
