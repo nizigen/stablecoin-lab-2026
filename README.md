@@ -147,10 +147,11 @@ flowchart LR
     Admin -- may pause / grant roles --> SUSD
 ```
 
-The key invariant: **`vault.totalCollateral() == stable.totalSupply()`**
+The backing invariant: **`vault.totalCollateral() >= stable.totalSupply()`**.
 
-As long as that equation holds, every coin is fully backed. The moment someone can mint out of
-thin air without collateral appearing, the equation breaks and the coin stops being stable.
+The ordinary deposit/redeem loop preserves equality; direct collateral donations can create
+surplus backing. Unbacked privileged minting can break the inequality. This checks token-unit
+backing, while redemption availability and the collateral's dollar value also matter for a peg.
 
 `script/Deploy.s.sol` wires all three together in a single command, and finishes by granting
 `MINTER_ROLE` to the vault — **skip that step and every deposit reverts**.
@@ -181,7 +182,7 @@ move by hand). It contains four TODOs, which are the subject of Ex5.
 > Tier 1 does **not** require deploying to a testnet — a local Anvil is enough.
 > The acceptance command for every exercise is `make exercise`; when you are done it should be all green.
 
-### Tier 2 (bonus)
+### Tier 2 (required for Assignment Two's 20% deployment category)
 
 Deploy to the Sepolia testnet and verify the source on Etherscan; submit the contract links.
 
@@ -259,6 +260,26 @@ To search for a fresh counterexample, `rm -rf cache/invariant` first.
 ---
 
 ## 6. Submission
+
+For Assignment Two, the assignment PDF takes precedence over this lab's general instructions:
+submit one project ZIP to Moodle, including `lib/`, the Ex3 screenshot, discussion answers and
+this architecture diagram. Paste the three Sepolia addresses and explorer links into the Moodle
+text box. Ex1 is an ungraded warm-up; Ex7 is optional and unmarked.
+
+The recovered Ex3 evidence is [the original unbacked-mint screenshot](evidence/ex3-unbacked-mint.png).
+It shows supply `1001000000000` against collateral `1000000000`, a ratio of 1001:1.
+See [the assignment review](ASSIGNMENT_REVIEW.md) for requirement-by-requirement status and
+[the evidence index](evidence/README.md) for verification records.
+
+| Sepolia contract | Address and explorer source tab |
+|---|---|
+| MockUSDC | [0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5](https://sepolia.etherscan.io/address/0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5#code) |
+| SimpleStablecoin | [0xE719617236fe799c32d58c87969f22c40CaCB74A](https://sepolia.etherscan.io/address/0xE719617236fe799c32d58c87969f22c40CaCB74A#code) |
+| Vault | [0xea7C998f2412c626331BC1d94D8EE433c7f99d29](https://sepolia.etherscan.io/address/0xea7C998f2412c626331BC1d94D8EE433c7f99d29#code) |
+
+The saved verification screenshot confirms MockUSDC and SimpleStablecoin were already verified
+on Etherscan. Its bottom shows Vault verification starting but omits the final result; confirm
+Vault's verified source before submission. Deployment alone does not prove source verification.
 
 | Item | Weight |
 |---|---|

@@ -1,0 +1,8 @@
+MockUSDC: 0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5
+https://sepolia.etherscan.io/address/0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5#code
+
+SimpleStablecoin: 0xE719617236fe799c32d58c87969f22c40CaCB74A
+https://sepolia.etherscan.io/address/0xE719617236fe799c32d58c87969f22c40CaCB74A#code
+
+Vault: 0xea7C998f2412c626331BC1d94D8EE433c7f99d29
+https://sepolia.etherscan.io/address/0xea7C998f2412c626331BC1d94D8EE433c7f99d29#code

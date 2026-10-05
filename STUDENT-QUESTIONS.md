@@ -10,19 +10,23 @@ Answer directly under each question. 150–300 words each — **reasoning over l
 
 > Your answer:
 
-The risk is that `MINTER_ROLE` is stronger than the vault actually needs. In this implementation, `SimpleStablecoin.burn(from, amount)` is protected by `onlyRole(MINTER_ROLE)`, so the vault can burn tokens from any address, not only from the user who is redeeming. The current `Vault.redeem()` uses that power in a normal way: it burns `msg.sender`'s sUSD and sends them USDC. But if the vault is upgraded badly, called through a bug, or reused in another context, the same role lets it destroy balances that did not consent. That is a dangerous key-design problem, not a math problem.
+The risk is excessive authority: MINTER_ROLE permits burning any address without explicit individual consent. Vault.redeem currently burns only its caller's tokens, and this deployed Vault has no upgrade mechanism. Nevertheless, privileged burning expands the trust boundary: every minter, including the administrator, can destroy unrelated balances.
 
-I would split minting from burning. `SimpleStablecoin` should expose `mint(address to, uint256 amount)` for authorized minters, but redemption burning should either be `burn(uint256 amount)` from `msg.sender` or `burnFrom(address from, uint256 amount)` using ERC20 allowance. Then `Vault.redeem()` would require the user to approve the vault or call a stablecoin method that burns only the caller's own tokens. The vault could still mint when collateral arrives, but it would no longer have a general "burn anyone" power.
+I would retain role protected minting but remove burn(address,uint256). SimpleStablecoin would expose burnFrom(address,uint256), consuming the caller's allowance before burning. A redeeming user first approves the Vault for the intended sUSD amount. Vault.redeem then calls stable.burnFrom(msg.sender,amount), where msg.sender inside Vault identifies that user. SimpleStablecoin checks allowance(user,Vault) against the requested amount; the user's sufficient balance is verified independently during burning. Calling burn(amount) directly from Vault would instead burn Vault's own tokens.
+
+Burning and returning USDC remain atomic: insufficient allowance, balance, or reserves causes the entire transaction to revert. Tests should prove authorized redemption succeeds while unauthorized burning fails, including attempts by addresses that still possess minting authority.
 
 **A2.** In this contract `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` and `PAUSER_ROLE` all go to the same address. How would you split them in production, and who holds each?
 
 > Your answer:
 
-In production I would not give all three roles to one hot wallet. `DEFAULT_ADMIN_ROLE` is the most dangerous role because it can grant and revoke the other roles, so it should be held by a multisig or timelock controlled by governance, not by a single deployer account. Changes to minting or pausing authority should be slow enough for users and monitors to see them before they take effect.
+In production I would separate authority because one compromised wallet currently controls issuance, role assignment, and emergency response. DEFAULT_ADMIN_ROLE should belong to a governance multisig operating through a timelock. Granting new minters or replacing administrators should have a public delay, allowing monitors and users to react before authority changes.
 
-`MINTER_ROLE` should be granted only to contracts that are part of the mint-redeem path, such as the vault or a Peg Stability Module. Human operators should not mint directly in normal operation. If emergency minting is ever needed, it should go through a separate governed process with public limits.
+MINTER_ROLE should belong only to reviewed contracts whose issuance requires collateral, such as Vault. The deployer should relinquish its minting role after configuration; otherwise restricting Vault alone leaves another unbacked issuance path. Caps and alerts provide additional protection against unexpected issuance.
 
-`PAUSER_ROLE` should be held by a security council or operations multisig that can react quickly to an exploit. This role needs faster response than admin governance, but it should still be multi-person and auditable. I would also make pausing limited: pause risky actions first, preserve redemption if reserves are sound, and require a clear unpause process.
+PAUSER_ROLE should belong to a separate security council multisig, able to stop dangerous operations promptly without waiting through the governance delay. Its powers should be limited to emergency controls, with a documented unpause process.
+
+These arrangements require independent signers and secure key handling. A multisig with several keys controlled by one person reproduces the original failure point under different addresses.
 
 ---
 
@@ -32,21 +36,21 @@ In production I would not give all three roles to one hot wallet. `DEFAULT_ADMIN
 
 > Your answer:
 
-Right now pausing is implemented through `_update`, which is the OpenZeppelin ERC20 hook used for transfers, minting, and burning. That is simple, but it makes pause too broad: when paused, users cannot transfer, new coins cannot be minted, and redemptions cannot burn sUSD. If the goal is "pause transfers but allow redemption", the pause check should not live in the single shared `_update` path.
+The current whenNotPaused modifier on _update blocks every balance change, including the burn required by Vault.redeem. I would replace that unconditional check with checks based on the operation's endpoints. When both from and to are nonzero, the operation is a transfer and must revert while transfers are paused. This covers both transfer and transferFrom because both reach _update.
 
-I would separate the stablecoin's external actions by intent. Normal user transfers should check `whenNotPaused`, while redemption burning should remain available through a dedicated method that is callable only by the vault and only as part of `Vault.redeem()`. Minting could be separately paused or rate-limited, depending on the emergency design. Another clean approach is to use separate flags, for example `transfersPaused`, `mintingPaused`, and `redemptionsPaused`, instead of one global pause.
+Minting has a zero from address and can use a separate minting pause flag. Burning has a zero to address and remains available for authorized redemption. Burn permission must still require user consent, for example the allowance checked by burnFrom; allowing burns during a pause must not restore arbitrary confiscation powers.
 
-The main design point is that redemption is the stabilizing exit channel. If collateral exists and the system is not insolvent, users should still be able to burn sUSD and receive collateral even while secondary transfers are stopped.
+Vault.redeem would continue checking available collateral, burning the user's approved amount, and returning collateral atomically. A separate redemption flag could address an actual reserve or collateral transfer failure. Tests should distinguish paused transfers, paused issuance, and successful redemption against available reserves.
 
 **B2.** In 2008, when a money-market fund "broke the buck", redemptions were frozen for days. In 2023 USDC depegged to $0.87 after a reserve bank failed, but redemptions were **not** shut. Compare the two responses — what does closing the redemption channel, or leaving it open, do to a stablecoin?
 
 > Your answer:
 
-Closing redemption and leaving redemption open send opposite signals to the market. If redemptions are frozen, holders can no longer convert the stablecoin back into the reserve asset at par. Even if the issuer eventually has enough assets, users face uncertainty about timing and access. That uncertainty usually pushes the token price below $1 because buyers demand a discount for lockup risk, legal risk, and information risk. A redemption freeze can slow a bank-run mechanically, but it also damages the claim that the coin is cash-like.
+Freezing redemption removes the holder's ability to exchange a claim for reserve assets at par. Buyers then discount uncertainty about asset value, payout timing, and access. A freeze can conserve liquidity and limit withdrawals, but it also disables redemption arbitrage: purchasing discounted tokens no longer guarantees a prompt profitable exit. Liquidity protection therefore comes at a cost to confidence.
 
-Leaving redemption open is riskier in the short term because reserves may leave quickly, but it supports confidence if the issuer is actually solvent. In the USDC example, the market saw a depeg when part of the reserve was exposed to a failed bank, but the redemption mechanism was not permanently closed. Once the market believed redemptions would continue and reserves were recoverable, arbitrage could pull the price back toward $1.
+Keeping a redemption commitment supports that arbitrage when reserves are accessible. Holders can convert tokens into dollars, and traders buying below par can redeem rather than depend solely on finding another buyer. In the USDC episode, support for par conversion once banking settlement resumed helped restore confidence; a redemption commitment does not imply uninterrupted weekend bank settlement.
 
-For a stablecoin, redemption is not just a feature. It is the main price defense. Freezing it should be an extreme last resort.
+Neither response creates missing assets. An insolvent issuer cannot sustainably promise full repayment merely by keeping withdrawals open. Emergency policy should distinguish temporary settlement constraints from losses, disclose reserve conditions, and explain redemption timing.
 
 ---
 
@@ -56,21 +60,23 @@ For a stablecoin, redemption is not just a feature. It is the main price defense
 
 > Your answer:
 
-This coin can depeg for at least two different classes of reasons. The first is an accounting or permission failure that creates more sUSD than collateral. Ex3 demonstrates this directly: if an attacker gets `MINTER_ROLE`, they can mint sUSD without depositing USDC. Then `stable.totalSupply()` rises while `vault.totalCollateral()` stays the same. The invariant `totalCollateral() >= totalSupply()` breaks immediately, and the coin is under-collateralized on-chain.
+The first class is a backing failure. If compromised MINTER_ROLE authority creates sUSD without a deposit, totalSupply rises while totalCollateral remains unchanged. Starting from equal backing, the inequality totalCollateral >= totalSupply becomes false immediately. Ex3 demonstrates this deficit, although the local experiment does not measure a traded market price.
 
-The second class is a redemption or liquidity failure. The invariant may still look true, but users may not be able to redeem. For example, if pausing freezes burn/redemption, or if the collateral token cannot be transferred, the system may be fully backed in accounting terms while the market price falls because holders cannot exit at $1. In that case the invariant is necessary but not sufficient.
+The second class is an access or liquidity failure. Pausing prevents burning, so holders cannot redeem even when collateral balances cover supply. A collateral token transfer restriction can produce the same result. The inequality remains true, but redemption arbitrage cannot operate, allowing market prices to fall below par.
 
-There is also off-chain collateral risk in real systems. If the reserve is a bank deposit, Treasury bill, or building, the on-chain balance may not represent immediately available value. The invariant only captures what the contract can measure.
+Collateral valuation creates another limitation. If the collateral itself loses dollar value, its token balance does not change, so the raw inequality can pass despite inadequate backing. Real reserves need valuation and liquidity checks.
+
+Direct collateral donations can also make collateral exceed supply harmlessly. Equality describes the loop; the inequality accommodates surplus backing.
 
 **C2.** Suppose an attacker bribes their way to `MINTER_ROLE`, mints 1,000,000 sUSD out of nothing and redeems it all. Describe the flow of funds, and name the step that could have stopped them.
 
 > Your answer:
 
-If an attacker obtains `MINTER_ROLE`, they can call `SimpleStablecoin.mint(attacker, 1_000_000e6)` without sending collateral to the vault. Their sUSD balance increases, and total supply increases, but `Vault.totalCollateral()` does not change. At that point the system has already become under-collateralized.
+The attacker obtains MINTER_ROLE and calls mint(attacker,1_000_000e6). Their balance and total supply increase without any collateral entering Vault. They then call Vault.redeem; this implementation requires no sUSD approval because Vault has privileged burn authority.
 
-The next step is redemption. If the vault holds real USDC from honest users, the attacker can approve or otherwise use the redemption path to burn their fake sUSD and withdraw USDC. In this simplified vault, `redeem(amount)` burns the caller's sUSD and transfers the same amount of USDC from the vault. The attacker is therefore converting unbacked tokens into backed collateral, draining reserves that should belong to legitimate holders.
+Full redemption succeeds only if Vault holds at least 1,000,000 USDC. Vault first checks its reserve balance, burns the caller's tokens, and transfers equal collateral. If the amount exceeds reserves, InsufficientCollateral reverts the entire transaction before burning or paying anything. In the recorded experiment, reserves are only 1,000 USDC, so redeeming one million fails. Redeeming 1,000 instead can empty those reserves, leaving legitimate holders without backing and the attacker with unbacked tokens.
 
-The step that should have stopped them is role control before minting. `MINTER_ROLE` should only be granted to audited minting contracts that enforce collateral checks. Admin role changes should require multisig or timelock approval, and the stablecoin should ideally have separate minting caps and monitoring so an abnormal mint cannot silently happen.
+The decisive prevention point is granting mint authority: only collateral enforcing contracts should receive it. A governance multisig, timelock, issuance caps, and monitoring reduce compromise risk. Checking reserves during redemption prevents excessive withdrawals, but cannot distinguish fraudulent tokens from legitimate tokens already in circulation.
 
 ---
 
@@ -80,21 +86,25 @@ The step that should have stopped them is role control before minting. `MINTER_R
 
 > Your answer:
 
-If the collateral were US Treasuries, `totalCollateral()` could not simply read an ERC20 balance and be done. Treasuries exist off-chain or through custodians, brokers, tokenized wrappers, and settlement systems. The contract would need some trusted source to report how many Treasuries are held, their current value, maturity, haircut, and whether they are encumbered. That introduces oracle and custodian risk.
+An ERC20 balance alone cannot establish Treasury backing. A tokenized Treasury claim depends on a custodian holding securities and on enforceable rights to them. Reporting must identify ownership, encumbrances, quantities, market prices, accrued interest, and any haircut used to cover valuation risk.
 
-The invariant also becomes more complex because Treasuries are not identical to USDC. Their market value moves with interest rates, they may settle on T+1, and they may not be liquid at par during stress. A real invariant would need to measure collateral value after haircuts, not just face value. For example, it might require `riskAdjustedCollateralValue >= stableSupply`, where risk-adjusted value comes from an oracle and internal risk model.
+The invariant should compare supply against available reserve value in matching units, for example riskAdjustedCollateralValue >= stableSupply. Face value is insufficient because interest rate changes alter sale prices. Reports need timestamps and freshness limits; stale or manipulated valuations can make an apparently solvent system issue too many tokens.
 
-The hardest new problem is trust. The smart contract can verify token balances, but it cannot independently verify that a custodian truly holds specific Treasury bills or that they can be sold fast enough during redemptions. Legal claims, audits, and reporting become part of the system.
+Solvency also differs from liquidity. Securities may require sale and settlement before dollars can reach redeeming holders. A cash buffer and clear withdrawal timing are therefore necessary even when total reserve value is sufficient.
+
+Custodian failures, reporting errors, and legal claims cannot be resolved by Solidity alone. Attestations, reconciliation, custody agreements, and insolvency procedures become part of maintaining credible backing.
 
 **D2.** If the collateral were **a building**, how would you put it inside this vault? Which off-chain roles or legal structures would you have to introduce?
 
 > Your answer:
 
-A building cannot be put into a vault the same way USDC can. The chain cannot hold the physical asset directly, so the vault would need a legal wrapper. Usually that means a special purpose vehicle or trust owns the building, and the on-chain token represents a claim on that entity or its cash flows. The smart contract would track tokenized claims, while the real control of the building depends on legal documents and off-chain enforcement.
+A building would need a legal wrapper rather than a direct deposit. An SPV or trust would own the property, and a token would represent defined rights in that entity. Documentation must specify whether holders own equity, secured debt, or a claim on rental cash flows; those rights have different repayment priorities.
 
-Several roles become necessary. A custodian or trustee must hold title or manage the SPV. A property manager handles rent, maintenance, insurance, and tenants. An appraiser or valuation oracle reports market value. A legal administrator handles liens, taxes, and sale rights. Auditors verify that the property exists, is owned by the right entity, and is not pledged elsewhere.
+A trustee or administrator manages the ownership structure. A property manager handles tenants, maintenance, insurance, and rent. Appraisers estimate value, while auditors check ownership and liabilities. Lawyers establish enforceable claims, title transfers, creditor priority, and treatment of insolvency.
 
-The invariant would also change. `totalCollateral()` would not be a simple balance; it would be an appraised and haircut-adjusted value, updated periodically. Redemption may not be instant because buildings are illiquid. A real design would need withdrawal queues, liquidity buffers, and clear rules for what token holders can claim if the building must be sold.
+Vault accounting would track tokenized claims and a conservative net valuation after mortgages, taxes, expenses, and haircuts. An appraisal still cannot guarantee a buyer at that price.
+
+Buildings cannot fund instant redemptions through token burning alone. The design needs liquid reserves, withdrawal queues, and sale procedures, with disclosed settlement delays and loss allocation if sale proceeds cannot cover stablecoin claims.
 
 ---
 
