@@ -1,0 +1,53 @@
+{
+  "queriedDate": "2026-10-06 Asia/Shanghai",
+  "source": "https://sourcify.dev/server/v2/contract/11155111/0xea7C998f2412c626331BC1d94D8EE433c7f99d29?fields=all",
+  "address": "0xea7C998f2412c626331BC1d94D8EE433c7f99d29",
+  "chainId": "11155111",
+  "match": "exact_match",
+  "creationMatch": "exact_match",
+  "runtimeMatch": "exact_match",
+  "verifiedAtUTC": "2026-10-02T05:42:25Z",
+  "isProxy": false,
+  "compiler": "0.8.24+commit.e11b9ed9",
+  "compilationKeys": [
+    "language",
+    "compiler",
+    "compilerVersion",
+    "compilerSettings",
+    "name",
+    "fullyQualifiedName"
+  ],
+  "topLevelKeys": [
+    "matchId",
+    "creationMatch",
+    "runtimeMatch",
+    "verifiedAt",
+    "creationBytecode",
+    "runtimeBytecode",
+    "deployment",
+    "sources",
+    "compilation",
+    "abi",
+    "metadata",
+    "storageLayout",
+    "transientStorageLayout",
+    "userdoc",
+    "devdoc",
+    "sourceIds",
+    "additionalInput",
+    "stdJsonInput",
+    "stdJsonOutput",
+    "signatures",
+    "proxyResolution",
+    "match",
+    "chainId",
+    "address"
+  ],
+  "localVaultSourceMatchesAfterLineEndingNormalization": true,
+  "optimizer": {
+    "runs": 200,
+    "enabled": true
+  },
+  "evmVersion": "cancun",
+  "fullyQualifiedName": "src/Vault.sol:Vault"
+}

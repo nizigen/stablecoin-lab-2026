@@ -1,0 +1,22 @@
+# Vault live checks — 2026-10-06
+
+Address: 0xea7C998f2412c626331BC1d94D8EE433c7f99d29
+Network: Sepolia, chainId 11155111
+RPC: https://ethereum-sepolia-rpc.publicnode.com
+All calls below are read-only eth_call. No wallet key, signature or new transaction was used.
+
+collateral() -> 0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5
+stable() -> 0xE719617236fe799c32d58c87969f22c40CaCB74A
+SimpleStablecoin.hasRole(keccak256("MINTER_ROLE"), Vault) -> true
+Vault.totalCollateral() -> 0
+SimpleStablecoin.totalSupply() -> 0
+SimpleStablecoin.paused() -> false
+Vault.deposit(0) -> expected revert ZeroAmount, selector 0x1f2a2005
+Vault.redeem(0) -> expected revert ZeroAmount, selector 0x1f2a2005
+Vault.redeem(1) -> expected revert InsufficientCollateral, selector 0x3a23d825
+
+These reads were separate latest-state requests, not an atomic snapshot. Zero collateral and zero supply are consistent with no outstanding tokens; this does not prove a funded mint/redeem transaction has been run on Sepolia.
+
+Sourcify API: creationMatch=exact_match, runtimeMatch=exact_match, verifiedAt=2026-10-02T05:42:25Z (2026-10-02 13:42:25 Asia/Shanghai). compiler 0.8.24+commit.e11b9ed9; EVM cancun; optimizer enabled, runs 200; no proxy. Registered src/Vault.sol equals local src/Vault.sol after normalizing CRLF/LF. Machine-readable result: vault-source-match-2026-10-06.json.
+
+Etherscan browser: Cloudflare/security page (HTTP403). Etherscan v2 getsourcecode API without an API token: Missing/Invalid API Key. These failures do not mean the contract is unverified on Etherscan. Sourcify verification is confirmed independently, but cannot be relabeled as direct proof of Etherscan verification.

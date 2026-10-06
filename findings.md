@@ -16,3 +16,5 @@
 - All three Sepolia addresses have runtime bytecode on 2026-10-05 publicRPC read; this does not prove Etherscan verification.
 - Answer author and independent reviewer corrected A1 caller+allowance+balance, C2 reserve-limited redemption; all8answers150 whitespace words.
 - No business source/test changes; git diff check passes; original forge fmt reports6files.
+
+2026-10-06 follow-up: User requested direct Vault checks, concrete coverage gaps, comment clarity and secret review. Public RPC confirms configured tokens, Vault minter role, empty supply/reserves and expected zero/excess-amount reverts without transactions. Sourcify reports creation/runtime exact_match verified2026-10-02T05:42:25Z; registered core Vault source equals local after newline normalization, compiler0.8.24 EVMcancun optimizer200. Etherscan page/API constraints still prevent platform-specific confirmation. Independent audit identified repay/threshold/rollback/pause recovery gaps. Corrected only comments in four exercise files; executable tokens unchanged. Independent secret scan found no real user key; known public Anvil fixtures remain. Final comment regression/review pending.

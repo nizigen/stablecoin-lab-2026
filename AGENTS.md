@@ -9,6 +9,8 @@
 - The assignment PDF overrides generic README labels: Tier2 is 20%, Ex1 ungraded, Ex7 optional; submission is a ZIP retaining lib/.
 - Do not treat historic notes as proof of current runtime results. Do not label chain bytecode presence as explorer source verification.
 - Real wallet/API credentials never belong in tracked files, screenshots or submission archives.
+- Distinguish public Anvil fixtures, placeholders and hashes from real credentials; report secret-scan scope and binary/history limits without printing candidates.
+- Liquidation burns the full debt in this exercise: an unpaid bonus is not automatically residual protocol bad debt. Explain who bears an economic loss.
 - Docs: README.md (architecture/setup), EXERCISES.md (task statements), STUDENT-QUESTIONS.md (answers).
 - Audit: ASSIGNMENT_REVIEW.md, evidence/README.md, evidence/verification-2026-10-05.txt, MOODLE_LINKS.md.
 - Session: task_plan.md, progress.md, findings.md.

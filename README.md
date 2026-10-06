@@ -58,11 +58,10 @@ Then go to **Verify** below.
 
 ### Track B — Windows (Codespaces)
 
-Foundry has **no native Windows binary** — the official releases ship only macOS and Linux
-builds, so `scripts/install-foundry-cn.sh` will refuse to run for you, and Git Bash /
-PowerShell are not workarounds. The straightforward path is to run the lab on GitHub's
-servers from your browser. Nothing is installed locally, which also makes it the only
-option on locked-down corporate machines.
+Codespaces runs the lab on GitHub's servers from your browser and requires no local
+Foundry installation. The repository's installation script targets macOS/Linux. Official
+Foundry v1.8.4 also provides Windows binaries; this submission was independently tested
+with that release using Git Bash for the doctor script and the Makefile's forge commands.
 
 1. Open <https://github.com/hgwoops/stablecoin-lab-2026>
 2. Green **`Code`** button → **`Codespaces`** tab → **`Create codespace on main`**
@@ -158,7 +157,7 @@ backing, while redemption availability and the collateral's dollar value also ma
 
 `src/exercises/` is a second system to practise on: `OverCollateralizedVault.sol`
 (over-collateralization + liquidation) together with `MockPriceFeed.sol` (a price feed you can
-move by hand). It contains four TODOs, which are the subject of Ex5.
+move by hand). Its four Ex5 operations implement valuation, minting, withdrawal and liquidation.
 
 ---
 
@@ -280,6 +279,13 @@ See [the assignment review](ASSIGNMENT_REVIEW.md) for requirement-by-requirement
 The saved verification screenshot confirms MockUSDC and SimpleStablecoin were already verified
 on Etherscan. Its bottom shows Vault verification starting but omits the final result; confirm
 Vault's verified source before submission. Deployment alone does not prove source verification.
+
+On 2026-10-06, the [Sourcify query result](evidence/vault-source-match-2026-10-06.json)
+confirmed exact creation/runtime matches for Vault and that its registered source matches
+`src/Vault.sol`. [Live read-only calls](evidence/vault-live-checks-2026-10-06.txt) also confirmed
+the configured token addresses and Vault's minter role. Etherscan-specific verification remains
+unconfirmed because its page was blocked and its API requires an access token; the confirmed
+Sourcify result should not be mislabeled as an Etherscan result.
 
 | Item | Weight |
 |---|---|

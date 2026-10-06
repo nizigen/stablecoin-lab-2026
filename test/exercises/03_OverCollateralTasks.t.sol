@@ -9,10 +9,10 @@ import {MockPriceFeed} from "../../src/exercises/MockPriceFeed.sol";
 import {OverCollateralizedVault} from "../../src/exercises/OverCollateralizedVault.sol";
 
 /// @title Ex5 — over-collateralization + liquidation
-/// @notice These tests are your acceptance criteria: fill in the four TODOs in
-///         src/exercises/OverCollateralizedVault.sol and turn them all green.
+/// @notice These acceptance tests cover decimal conversion, collateral-ratio limits and
+///         liquidation in src/exercises/OverCollateralizedVault.sol.
 ///
-///         Acceptance: make exercise (it should be red until you are finished)
+///         Acceptance: make exercise.
 /// @dev Everything here turns on two numbers:
 ///        price 2000e8  — 1 mWETH is worth $2000
 ///        collateral 18 decimals / stablecoin 6 decimals — one conversion is 10^20
@@ -89,7 +89,8 @@ contract OverCollateralTasksTest is Test {
         vault.mintStable(1400e6);
     }
 
-    /// @dev The boundary: 150% is exactly legal, one more unit reverts
+    /// @dev Minting 1333 sUSD stays above 150%; 1334 sUSD falls below it.
+    ///      These whole-coin cases bracket the threshold, rather than test one-unit precision.
     function test_Ex5_Mint_ExactRatioBoundary() public {
         _deposit(alice, 1e18);
         _deposit(bob, 1e18);
@@ -174,9 +175,9 @@ contract OverCollateralTasksTest is Test {
         vault.liquidate(alice);
     }
 
-    /// @dev When the price falls just a little below 120%, the bonus can exceed the collateral the
-    ///      user has left — then the liquidator can only take what remains, and the shortfall is
-    ///      bad debt. This one is a reminder that liquidation itself can go wrong.
+    /// @dev At 100% backing, principal is covered but the 10% bonus is not. The liquidator
+    ///      burns the entire debt and receives all collateral, earning no bonus in this case.
+    ///      No residual debt remains; a price below 100% would make this trade loss-making.
     function test_Ex5_Liquidate_CapsSeizureAtAvailableCollateral() public {
         _deposit(alice, 1e18);
         vm.prank(alice);

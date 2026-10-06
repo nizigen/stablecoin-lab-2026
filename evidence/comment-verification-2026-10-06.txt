@@ -1,0 +1,68 @@
+Independent comment verification: 2026-10-06 Asia/Shanghai
+Baseline: git HEAD
+No executable source modifications by verifier.
+
+src/exercises/OverCollateralizedVault.sol: executable tokens match=True; token count=787; SHA256=e8d2af9e057d7db2ebf6ddf6433b232d8e57ddfcff8a4160765deb9fa3be9df6
+test/exercises/01_LoopTasks.t.sol: executable tokens match=True; token count=824; SHA256=d62240a7423baad4c6b677fcc9ea280ed60f70b3994a38c5e640bc734c600ef2
+test/exercises/02_InvariantTasks.t.sol: executable tokens match=True; token count=539; SHA256=5332c14f1e088d2b6a0c9ba4d60db233320838c5bfc1bc0dceb5b438650d5fc8
+test/exercises/03_OverCollateralTasks.t.sol: executable tokens match=True; token count=1039; SHA256=87cbd4575d1f34d2a2d3617c84e858941dad5d046e2d8cd842c20726fa1db44e
+src/Vault.sol: complete source unchanged=True
+TOKEN CHECK EXIT: 0
+GIT DIFF CHECK EXIT: 0
+forge Version: 1.8.4
+Commit SHA: 50af4efe189dc64bad2b75ed6990b835de66c4ae
+Build Timestamp: 2026-10-01T13:50:42.600348400Z (1790862642)
+Build Profile: dist
+COMMAND: forge test --match-path 'test/exercises/*.t.sol' -vv
+Compiling 4 files with Solc 0.8.24
+Solc 0.8.24 finished in 2.10s
+Compiler run successful!
+
+Ran 7 tests for test/exercises/01_LoopTasks.t.sol:LoopTasksTest
+[PASS] test_Ex2_DecimalsTrap() (gas: 285096)
+[PASS] test_Ex2_DepositIncreasesSupplyByExactly(uint96) (runs: 256, μ: 284176, ~: 284199)
+[PASS] test_Ex4_AttackerCannotBurnOthersBalance() (gas: 289823)
+[PASS] test_Ex4_Mint_RevertsForNonMinter() (gas: 44175)
+[PASS] test_Ex4_Pause_BlocksRedeem() (gas: 352868)
+[PASS] test_Ex4_Pause_BlocksTransfers() (gas: 329788)
+[PASS] test_Ex4_VaultHoldsTheKey_CanBurnAnyonesBalance() (gas: 301929)
+Suite result: ok. 7 passed; 0 failed; 0 skipped; finished in 26.40ms (39.36ms CPU time)
+
+Ran 10 tests for test/exercises/03_OverCollateralTasks.t.sol:OverCollateralTasksTest
+[PASS] testFuzz_Ex5_SupplyBackedByValue(uint96) (runs: 256, μ: 274091, ~: 220546)
+[PASS] test_Ex5_CollateralValue_ConvertsDecimalsCorrectly() (gas: 174085)
+[PASS] test_Ex5_Liquidate_CapsSeizureAtAvailableCollateral() (gas: 420777)
+[PASS] test_Ex5_Liquidate_RevertsWhenHealthy() (gas: 287328)
+[PASS] test_Ex5_Liquidate_SeizesCollateral() (gas: 476936)
+[PASS] test_Ex5_Mint_ExactRatioBoundary() (gas: 439287)
+[PASS] test_Ex5_Mint_HappyPath() (gas: 284514)
+[PASS] test_Ex5_Mint_RevertsWhenUndercollateralized() (gas: 196076)
+[PASS] test_Ex5_Redeem_AtExactRatioSucceeds() (gas: 327462)
+[PASS] test_Ex5_Redeem_RevertsIfItBreachesRatio() (gas: 288393)
+Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 27.83ms (46.65ms CPU time)
+
+Ran 1 test for test/exercises/02_InvariantTasks.t.sol:InvariantTasksTest
+[PASS]
+InvariantTasksTest invariants:
+[PASS] invariant_CollateralBacksSupply
+[PASS] invariant_VaultHoldsNoStablecoin
+ InvariantTasksTest invariants (runs: 256, calls: 128000, reverts: 0)
+
+╭--------------+----------+-------+---------+----------╮
+| Contract     | Selector | Calls | Reverts | Discards |
++======================================================+
+| VaultHandler | deposit  | 63984 | 0       | 0        |
+|--------------+----------+-------+---------+----------|
+| VaultHandler | redeem   | 64016 | 0       | 0        |
+╰--------------+----------+-------+---------+----------╯
+
+Suite result: ok. 1 passed; 0 failed; 0 skipped; finished in 19.18s (19.17s CPU time)
+
+Ran 3 test suites in 19.18s (19.23s CPU time): 18 tests passed, 0 failed, 0 skipped (18 total tests)
+TEST EXIT: 0
+
+INDEPENDENT DOCUMENT REVIEW: 4 changed Solidity files contain comment-only changes with identical executable token sequences. Unit conversion, coarse mint threshold, oracle sign/freshness and liquidation reward/loss descriptions match implementation. Core Vault full source remains identical after line-ending normalization.
+SOURCIFY REVIEW: saved exact creation/runtime matches, compiler 0.8.24, EVM cancun, optimizer 200 and source normalization match consistently reported. Etherscan status remains explicitly unconfirmed; RPC latest-state reads are separate, do not prove a funded Sepolia round trip.
+SECRET REPORT REVIEW: contains classifications and limitations, no secret values; identifies public Anvil fixtures and all-zero placeholder without echoing them. Independent secret scan performed by separate agent, not rerun here.
+COVERAGE REVIEW: repay, precise thresholds, cap/rollback and permission recovery gaps supported by current test calls; no assertion that passing exercises guarantees full coverage or full marks.
+FINAL DOC REVIEW: ASSIGNMENT_REVIEW.md now records 2026-10-06 changes accurately and distinguishes comment-only source edits from executable behavior. No verifier source edits or blockchain transactions.

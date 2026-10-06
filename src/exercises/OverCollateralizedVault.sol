@@ -7,7 +7,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {SimpleStablecoin} from "../SimpleStablecoin.sol";
 import {IPriceFeed} from "./IPriceFeed.sol";
 
-/// @title Over-collateralized vault (Ex5) — four TODOs are waiting for you
+/// @title Over-collateralized vault (Ex5) — valuation, minting, redemption and liquidation
 /// @notice Unlike the 1:1 loop in Vault.sol, $1 of collateral deposited here mints at most
 ///         0.667 sUSD (a 150% collateral ratio). Once the collateral ratio falls below
 ///         120%, anyone can take that collateral at a discount by paying sUSD — that is
@@ -67,8 +67,8 @@ contract OverCollateralizedVault {
     // ==================================================================
 
     /// @notice What one unit of collateral is worth in USD, 8 decimals
-    /// @dev Production code would also check whether updatedAt is stale and whether
-    ///      answer <= 0 — the oracle is an attack surface of its own
+    /// @dev Nonpositive prices are rejected here. Production code must also check oracle
+    ///      freshness; this mock does not enforce an updatedAt age limit.
     function collateralPrice() public view returns (uint256) {
         (, int256 answer,,,) = priceFeed.latestRoundData();
         if (answer <= 0) revert ZeroAmount();
@@ -104,19 +104,18 @@ contract OverCollateralizedVault {
     }
 
     // ==================================================================
-    // TODO Ex5.1 — decimal conversion
+    // Ex5.1 — decimal conversion
     // ==================================================================
 
     /// @notice Convert `amount` units of collateral (18 decimals) into sUSD smallest units
     ///         (6 decimals)
-    /// @dev The product carries 18 + 8 = 26 decimals and you want 6 — divide by 10 to the
-    ///      what?
+    /// @dev The product carries 18 + 8 = 26 decimals; dividing by 10^20 gives 6 decimals.
     function collateralValue(uint256 amount) public view returns (uint256) {
         return amount * collateralPrice() / 1e20;
     }
 
     // ==================================================================
-    // TODO Ex5.2 — minting has to leave enough collateral behind
+    // Ex5.2 — minting has to leave enough collateral behind
     // ==================================================================
 
     /// @notice Mint `amount` of sUSD, but the collateral ratio afterwards must not fall
@@ -137,7 +136,7 @@ contract OverCollateralizedVault {
     }
 
     // ==================================================================
-    // TODO Ex5.3 — withdrawing collateral must not leave the position unhealthy either
+    // Ex5.3 — withdrawing collateral must not leave the position unhealthy either
     // ==================================================================
 
     /// @notice Withdraw `amount` units of collateral; the ratio afterwards must not fall
@@ -160,15 +159,16 @@ contract OverCollateralizedVault {
     }
 
     // ==================================================================
-    // TODO Ex5.4 — liquidation
+    // Ex5.4 — liquidation
     // ==================================================================
 
     /// @notice Once the ratio falls below LIQUIDATION_RATIO, anyone may burn that user's
     ///         entire sUSD debt and seize collateral worth
     ///         "debt value × (100% + LIQUIDATION_BONUS)".
-    /// @dev Do not forget: the collateral may not be enough to pay that bonus. In that case
-    ///      take everything the user has left — the shortfall is bad debt, and that is
-    ///      exactly where liquidation is most fragile.
+    /// @dev Seizure is capped at the user's remaining collateral, but the liquidator still
+    ///      burns the entire debt. Missing bonus is a reduced reward; collateral worth less
+    ///      than the debt makes liquidation loss-making. This implementation records no
+    ///      residual bad debt, and cannot force a liquidator to accept that loss.
     function liquidate(address user) external {
         if (collateralRatio(user) >= LIQUIDATION_RATIO) {
             revert NotLiquidatable();

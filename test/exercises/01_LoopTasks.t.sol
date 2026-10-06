@@ -7,13 +7,11 @@ import {MockUSDC} from "../../src/MockUSDC.sol";
 import {SimpleStablecoin} from "../../src/SimpleStablecoin.sol";
 import {Vault} from "../../src/Vault.sol";
 
-/// @title Ex2 + Ex4 — hands-on tasks: turn red into green
-/// @notice Every `assertTrue(false, "TODO ...")` below is a placeholder. Write the real
-///         assertion, watch the test go green, and that exercise is done.
+/// @title Ex2 + Ex4 — decimal amounts, permissions and pausing
+/// @notice These tests check the mint/redeem loop and demonstrate the broad burn authority
+///         deliberately granted to the vault in this lab.
 ///
-///         Acceptance: make exercise (it should be red until you are finished)
-///         Do not open test/Stablecoin.t.sol — it contains the answers. Write yours
-///         first, and only look once you are stuck.
+///         Acceptance: make exercise.
 contract LoopTasksTest is Test {
     MockUSDC internal usdc;
     SimpleStablecoin internal stable;
@@ -64,7 +62,8 @@ contract LoopTasksTest is Test {
     }
 
     /// @dev Run deposit with 1000e18 instead of 1000e6, see what happens, then assert what
-    ///      you observed. MockUSDC has 6 decimals — 1000e18 is one billion USDC.
+    ///      you observed. MockUSDC has 6 decimals — 1000e18 represents 10^15 USDC,
+    ///      which is 10^12 times the intended 1000 USDC.
     ///      There is no expected answer here; the point is that you run it yourself and
     ///      read the numbers.
     function test_Ex2_DecimalsTrap() public {

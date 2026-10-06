@@ -16,7 +16,7 @@ import {Vault} from "../../src/Vault.sol";
 ///         That is what a stablecoin should be tested like — you will never guess the
 ///         order an attacker does things in.
 ///
-///         Acceptance: make exercise (it should be red until you are finished)
+///         Acceptance: make exercise.
 ///
 /// @dev How it works: Foundry picks functions from the handler at random, picks random
 ///      arguments, and calls them N times in a row; after each round it runs every
@@ -28,7 +28,7 @@ contract VaultHandler is Test {
 
     address[3] public users;
 
-    /// @dev Bookkeeping: proves the fuzzer really reached the handler instead of idling
+    /// @dev Counters record successful operations; early returns do not increment them.
     uint256 public ghost_deposits;
     uint256 public ghost_redeems;
 
@@ -45,7 +45,7 @@ contract VaultHandler is Test {
         }
     }
 
-    /// @dev Given to you — this is the standard shape of "pick a random argument and keep it
+    /// @dev This is the standard shape of "pick a random argument and keep it
     ///      inside a valid range"
     function deposit(uint256 userSeed, uint256 amount) external {
         address user = users[bound(userSeed, 0, users.length - 1)];
@@ -62,13 +62,12 @@ contract VaultHandler is Test {
         ghost_deposits++;
     }
 
-    /// TODO Ex6.1 — implement redemption
-    /// @dev Requirements:
+    /// Ex6.1 — redemption handler
+    /// @dev Each redemption follows these steps:
     ///       1) pick one user at random (a user may hold 0 sUSD — if so, return early)
     ///       2) bound amount to [1, that user's sUSD balance]
     ///       3) call vault.redeem(amount) as that user
-    ///       4) do not forget approve — redeem needs no allowance, but deposit does
-    ///      Hint: the two parameters have no names yet. Name them first.
+    ///      Redeem needs no allowance because the vault can burn; deposit requires approval.
     function redeem(uint256 userSeed, uint256 amount) external {
         address user = users[bound(userSeed, 0, users.length - 1)];
 
@@ -108,16 +107,14 @@ contract InvariantTasksTest is Test {
         targetContract(address(handler));
     }
 
-    /// TODO Ex6.2 — the main invariant: collateral is never less than the supply
-    /// @dev The assertion below is wrong on purpose (it asserts the supply is 0), which is
-    ///      why it goes red. Turn it into the property you actually want to defend. When it
-    ///      fails, Foundry prints the counterexample call sequence — walk through that
-    ///      sequence and you will see exactly how the invariant broke.
+    /// Ex6.2 — the main invariant: collateral is never less than the supply
+    /// @dev This property covers the handler's legitimate deposit/redeem operations.
+    ///      On failure, Foundry prints a counterexample call sequence for inspection.
     function invariant_CollateralBacksSupply() public view {
         assertGe(vault.totalCollateral(), stable.totalSupply(), "collateral must cover supply");
     }
 
-    /// TODO Ex6.3 — a second invariant: the vault itself never holds sUSD
+    /// Ex6.3 — a second invariant: the vault itself never holds sUSD
     /// @dev Think about why this has to hold: the vault only ever mints sUSD to users and
     ///      should keep none for itself. If this one breaks, what does that mean?
     function invariant_VaultHoldsNoStablecoin() public view {
