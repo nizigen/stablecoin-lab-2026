@@ -276,16 +276,18 @@ See [the assignment review](ASSIGNMENT_REVIEW.md) for requirement-by-requirement
 | SimpleStablecoin | [0xE719617236fe799c32d58c87969f22c40CaCB74A](https://sepolia.etherscan.io/address/0xE719617236fe799c32d58c87969f22c40CaCB74A#code) |
 | Vault | [0xea7C998f2412c626331BC1d94D8EE433c7f99d29](https://sepolia.etherscan.io/address/0xea7C998f2412c626331BC1d94D8EE433c7f99d29#code) |
 
-The saved verification screenshot confirms MockUSDC and SimpleStablecoin were already verified
-on Etherscan. Its bottom shows Vault verification starting but omits the final result; confirm
-Vault's verified source before submission. Deployment alone does not prove source verification.
+The [original verification screenshot](evidence/sepolia-verification-record.png) confirms
+MockUSDC and SimpleStablecoin were already verified on Etherscan. The
+[Vault Etherscan screenshot captured on 2026-10-06](evidence/vault-etherscan-verified-2026-10-06.png)
+confirms Source Code Verified / Exact Match for the Vault address above, using compiler
+`v0.8.24+commit.e11b9ed9`, optimizer 200 runs and EVM `cancun`. All three verification
+records are now present; no additional Vault verification or deployment is needed.
 
 On 2026-10-06, the [Sourcify query result](evidence/vault-source-match-2026-10-06.json)
 confirmed exact creation/runtime matches for Vault and that its registered source matches
 `src/Vault.sol`. [Live read-only calls](evidence/vault-live-checks-2026-10-06.txt) also confirmed
-the configured token addresses and Vault's minter role. Etherscan-specific verification remains
-unconfirmed because its page was blocked and its API requires an access token; the confirmed
-Sourcify result should not be mislabeled as an Etherscan result.
+the configured token addresses and Vault's minter role. Earlier automated Etherscan requests
+were blocked; the subsequent browser screenshot independently confirms Etherscan's status.
 
 | Item | Weight |
 |---|---|

@@ -1,5 +1,7 @@
 # 仓库秘密信息检查（2026-10-06，Asia/Shanghai）
 
+后续已直接检查用户启动的Codespace：`.env`确实含配置私钥和API key，已忽略且未跟踪；权限从0666收紧到0600。实际凭据在其他792个文件及695个可达历史blobs中没有私钥/API key副本，只有ignored部署cache包含完整RPC URL。结果与限制见[Codespace补充报告](codespace-review-2026-10-06.md)。下文原扫描范围是本地克隆，不能将“未发现真实密钥”理解成远端`.env`没有密钥。
+
 ## 结论
 
 在本次检查范围内，没有发现用户实际部署用的私钥、非公开助记词、GitHub/API 访问令牌或 Etherscan API key 明文。发现的私钥字面量均为公开 Anvil 开发账户测试密钥；`.env.example` 的私钥字段是全零占位符。本报告不包含任何密钥值或助记词文本。
