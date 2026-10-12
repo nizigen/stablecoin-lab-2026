@@ -7,20 +7,9 @@ import {MockUSDC} from "../../src/MockUSDC.sol";
 import {SimpleStablecoin} from "../../src/SimpleStablecoin.sol";
 import {Vault} from "../../src/Vault.sol";
 
-/// @title Ex6 — invariant testing
-/// @notice Every test so far set up a situation and then checked the result. Invariant
-///         testing flips that around: let the machine call operations randomly and
-///         repeatedly, then ask "no matter how it thrashes, does this property still
-///         hold?"
-///
-///         That is what a stablecoin should be tested like — you will never guess the
-///         order an attacker does things in.
-///
-///         Acceptance: make exercise.
-///
-/// @dev How it works: Foundry picks functions from the handler at random, picks random
-///      arguments, and calls them N times in a row; after each round it runs every
-///      invariant_* function. The first failed assertion is a counterexample.
+/// @title Ex6: invariant testing
+/// @notice The handler generates valid deposits and redemptions for three users.
+/// @dev Foundry varies users, amounts, and call order, then checks the invariants.
 contract VaultHandler is Test {
     MockUSDC internal usdc;
     SimpleStablecoin internal stable;
@@ -45,8 +34,7 @@ contract VaultHandler is Test {
         }
     }
 
-    /// @dev This is the standard shape of "pick a random argument and keep it
-    ///      inside a valid range"
+    /// @dev Limit deposits to the user's balance so the campaign exercises successful calls.
     function deposit(uint256 userSeed, uint256 amount) external {
         address user = users[bound(userSeed, 0, users.length - 1)];
 
@@ -62,12 +50,8 @@ contract VaultHandler is Test {
         ghost_deposits++;
     }
 
-    /// Ex6.1 — redemption handler
-    /// @dev Each redemption follows these steps:
-    ///       1) pick one user at random (a user may hold 0 sUSD — if so, return early)
-    ///       2) bound amount to [1, that user's sUSD balance]
-    ///       3) call vault.redeem(amount) as that user
-    ///      Redeem needs no allowance because the vault can burn; deposit requires approval.
+    /// @dev Ex6.1: bound redemption to the user's sUSD balance, skipping empty accounts.
+    ///      Vault's burn permission means redemption needs no allowance.
     function redeem(uint256 userSeed, uint256 amount) external {
         address user = users[bound(userSeed, 0, users.length - 1)];
 
@@ -114,9 +98,7 @@ contract InvariantTasksTest is Test {
         assertGe(vault.totalCollateral(), stable.totalSupply(), "collateral must cover supply");
     }
 
-    /// Ex6.3 — a second invariant: the vault itself never holds sUSD
-    /// @dev Think about why this has to hold: the vault only ever mints sUSD to users and
-    ///      should keep none for itself. If this one breaks, what does that mean?
+    /// @dev Ex6.3: this handler mints to users and burns from users, so Vault holds no sUSD.
     function invariant_VaultHoldsNoStablecoin() public view {
         assertEq(stable.balanceOf(address(vault)), 0, "vault must not hold stablecoin");
     }

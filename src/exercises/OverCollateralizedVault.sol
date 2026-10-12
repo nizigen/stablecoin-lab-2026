@@ -7,16 +7,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {SimpleStablecoin} from "../SimpleStablecoin.sol";
 import {IPriceFeed} from "./IPriceFeed.sol";
 
-/// @title Over-collateralized vault (Ex5) — valuation, minting, redemption and liquidation
-/// @notice Unlike the 1:1 loop in Vault.sol, $1 of collateral deposited here mints at most
-///         0.667 sUSD (a 150% collateral ratio). Once the collateral ratio falls below
-///         120%, anyone can take that collateral at a discount by paying sUSD — that is
-///         liquidation, the core mechanism behind MakerDAO.
-///
-///         Three decimal scales must be told apart:
-///           collateral  18 decimals (like WETH)
-///           stable       6 decimals (like USDC)
-///           priceFeed    8 decimals (like Chainlink ETH/USD)
+/// @title Ex5: over-collateralized vault
+/// @notice Minting and withdrawals require at least 150% backing. Positions below 120%
+///         can be liquidated by burning their full debt for collateral with a 10% bonus.
+/// @dev Collateral uses 18 decimals, stablecoin 6, and the price feed 8.
 contract OverCollateralizedVault {
     using SafeERC20 for IERC20;
 
@@ -63,12 +57,11 @@ contract OverCollateralizedVault {
     }
 
     // ==================================================================
-    // Given to you — no decimal conversion involved, do not touch
+    // Collateral accounting
     // ==================================================================
 
     /// @notice What one unit of collateral is worth in USD, 8 decimals
-    /// @dev Nonpositive prices are rejected here. Production code must also check oracle
-    ///      freshness; this mock does not enforce an updatedAt age limit.
+    /// @dev This lab rejects nonpositive prices but does not check how old the price is.
     function collateralPrice() public view returns (uint256) {
         (, int256 answer,,,) = priceFeed.latestRoundData();
         if (answer <= 0) revert ZeroAmount();
@@ -120,8 +113,7 @@ contract OverCollateralizedVault {
 
     /// @notice Mint `amount` of sUSD, but the collateral ratio afterwards must not fall
     ///         below MIN_COLLATERAL_RATIO
-    /// @dev Record the debt first and check second, so that collateralRatio() is looking
-    ///      at the post-mint state
+    /// @dev Check the ratio with the new debt included; a revert restores the old debt.
     function mintStable(uint256 amount) external {
         if (amount == 0) revert ZeroAmount();
 
@@ -162,13 +154,11 @@ contract OverCollateralizedVault {
     // Ex5.4 — liquidation
     // ==================================================================
 
-    /// @notice Once the ratio falls below LIQUIDATION_RATIO, anyone may burn that user's
-    ///         entire sUSD debt and seize collateral worth
-    ///         "debt value × (100% + LIQUIDATION_BONUS)".
-    /// @dev Seizure is capped at the user's remaining collateral, but the liquidator still
-    ///      burns the entire debt. Missing bonus is a reduced reward; collateral worth less
-    ///      than the debt makes liquidation loss-making. This implementation records no
-    ///      residual bad debt, and cannot force a liquidator to accept that loss.
+    /// @notice Below LIQUIDATION_RATIO, a liquidator pays the user's full debt in sUSD
+    ///         and receives collateral worth the debt plus LIQUIDATION_BONUS.
+    /// @dev Seizure cannot exceed the user's collateral. Full debt is still burned, so
+    ///      no debt remains. If collateral is worth less than the debt, the liquidator
+    ///      bears the loss and may choose not to liquidate.
     function liquidate(address user) external {
         if (collateralRatio(user) >= LIQUIDATION_RATIO) {
             revert NotLiquidatable();

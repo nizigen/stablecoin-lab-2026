@@ -8,10 +8,7 @@ import {SimpleStablecoin} from "../../src/SimpleStablecoin.sol";
 import {Vault} from "../../src/Vault.sol";
 
 /// @title Ex2 + Ex4 — decimal amounts, permissions and pausing
-/// @notice These tests check the mint/redeem loop and demonstrate the broad burn authority
-///         deliberately granted to the vault in this lab.
-///
-///         Acceptance: make exercise.
+/// @notice Tests for the 1:1 loop, pause behavior, and the vault's broad burn permission.
 contract LoopTasksTest is Test {
     MockUSDC internal usdc;
     SimpleStablecoin internal stable;
@@ -40,9 +37,7 @@ contract LoopTasksTest is Test {
     // Ex2 · the decimals trap: a 6-decimal stablecoin meets 18-decimal intuition
     // ==================================================================
 
-    /// @dev For any legitimate amount x, totalSupply() must grow by exactly x after
-    ///      deposit(x). Hint: use vm.assume to rule out x == 0, and faucet alice enough
-    ///      usdc first.
+    /// @dev Each deposit must increase supply by the same amount in 6-decimal units.
     function test_Ex2_DepositIncreasesSupplyByExactly(uint96 raw) public {
         uint256 amount = uint256(raw) % 1_000_000e6;
         vm.assume(amount > 0);
@@ -61,11 +56,7 @@ contract LoopTasksTest is Test {
         assertEq(vault.totalCollateral(), stable.totalSupply());
     }
 
-    /// @dev Run deposit with 1000e18 instead of 1000e6, see what happens, then assert what
-    ///      you observed. MockUSDC has 6 decimals — 1000e18 represents 10^15 USDC,
-    ///      which is 10^12 times the intended 1000 USDC.
-    ///      There is no expected answer here; the point is that you run it yourself and
-    ///      read the numbers.
+    /// @dev With 6 decimals, 1000e18 means 10^15 USDC: 10^12 times the intended amount.
     function test_Ex2_DecimalsTrap() public {
         uint256 intendedAmount = 1000e6;
         uint256 wrongAmount = 1000e18;
@@ -92,8 +83,7 @@ contract LoopTasksTest is Test {
     // Ex4 · permissions and pausing: where the guard is, who holds the key
     // ==================================================================
 
-    /// @dev The attacker has no MINTER_ROLE, so calling mint directly must revert. Use
-    ///      vm.expectRevert + abi.encodeWithSelector to pin down the exact error.
+    /// @dev The revert must identify the unauthorized attacker and the required role.
     function test_Ex4_Mint_RevertsForNonMinter() public {
         bytes32 role = stable.MINTER_ROLE();
 
@@ -128,9 +118,7 @@ contract LoopTasksTest is Test {
         assertEq(stable.balanceOf(attacker), 0);
     }
 
-    /// @dev What pause() freezes is _update, so redemption is frozen along with everything
-    ///      else — why is that bad news in a real crisis?
-    ///      (This is STUDENT-QUESTIONS.md B1 and B2.)
+    /// @dev Redemption burns tokens through _update, so pause blocks it too.
     function test_Ex4_Pause_BlocksRedeem() public {
         _depositForAlice();
         stable.pause();
@@ -169,8 +157,7 @@ contract LoopTasksTest is Test {
         assertEq(stable.totalSupply(), 1000e6);
     }
 
-    /// @dev ...but the vault can, because it holds MINTER_ROLE and burn() answers to that
-    ///      same role. This test proves the backdoor exists; it does not justify it.
+    /// @dev Pranking Vault shows the token's permission; no public Vault call burns others' tokens.
     function test_Ex4_VaultHoldsTheKey_CanBurnAnyonesBalance() public {
         _depositForAlice();
 

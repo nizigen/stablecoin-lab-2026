@@ -60,8 +60,8 @@ Then go to **Verify** below.
 
 Codespaces runs the lab on GitHub's servers from your browser and requires no local
 Foundry installation. The repository's installation script targets macOS/Linux. Official
-Foundry v1.8.4 also provides Windows binaries; this submission was independently tested
-with that release using Git Bash for the doctor script and the Makefile's forge commands.
+Foundry v1.8.4 also provides Windows binaries. Codespaces keeps the same Linux setup
+used by the lab's Makefile.
 
 1. Open <https://github.com/hgwoops/stablecoin-lab-2026>
 2. Green **`Code`** button → **`Codespaces`** tab → **`Create codespace on main`**
@@ -260,48 +260,30 @@ To search for a fresh counterexample, `rm -rf cache/invariant` first.
 
 ## 6. Submission
 
-For Assignment Two, the assignment PDF takes precedence over this lab's general instructions:
-submit one project ZIP to Moodle, including `lib/`, the Ex3 screenshot, discussion answers and
-this architecture diagram. Paste the three Sepolia addresses and explorer links into the Moodle
-text box. Ex1 is an ungraded warm-up; Ex7 is optional and unmarked.
+Assignment Two requires one project ZIP on Moodle. Keep `lib/` inside so the tests can run without downloading dependencies. Ex1 is an ungraded warm-up; Ex7 is optional.
 
-The recovered Ex3 evidence is [the original unbacked-mint screenshot](evidence/ex3-unbacked-mint.png).
-It shows supply `1001000000000` against collateral `1000000000`, a ratio of 1001:1.
-See [the assignment review](ASSIGNMENT_REVIEW.md) for requirement-by-requirement status and
-[the evidence index](evidence/README.md) for verification records.
+The ZIP must include:
 
-| Sepolia contract | Address and explorer source tab |
-|---|---|
+- The completed exercises and tests: `make test` and `make exercise` must pass.
+- `STUDENT-QUESTIONS.md`, with A1–D2 answers and the section-E test table.
+- The architecture diagram in this README.
+- [EX3-unbacked-mint.png](screenshoot/EX3-unbacked-mint.png), showing supply `1001000000000` and collateral `1000000000`.
+
+The other screenshots are in `screenshoot/`: [Ex0–Ex6 test results](screenshoot/EX0-EX6-tests-passed.png), [Ex4](screenshoot/EX4-permissions-and-pause.png), [Ex5](screenshoot/EX5-overcollateralization-and-liquidation.png), and [Ex6](screenshoot/EX6-invariant-tests.png). These are the original captures; renaming them does not change their capture dates.
+
+Exclude `.git/`, `out/`, `cache/`, `broadcast/`, `.env` and existing ZIP files. Keep `.env.example`, which contains placeholders. Do not include personal wallet keys or API credentials.
+
+## Deployment (Sepolia)
+
+These three contracts were deployed on 2026-10-02. Paste their addresses and links into the Moodle text box, as required by Assignment Two.
+
+| Contract | Address / Etherscan source |
+| --- | --- |
 | MockUSDC | [0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5](https://sepolia.etherscan.io/address/0x5e84CDb0C3656F5F510D1c7a48C4dBD679711fC5#code) |
 | SimpleStablecoin | [0xE719617236fe799c32d58c87969f22c40CaCB74A](https://sepolia.etherscan.io/address/0xE719617236fe799c32d58c87969f22c40CaCB74A#code) |
 | Vault | [0xea7C998f2412c626331BC1d94D8EE433c7f99d29](https://sepolia.etherscan.io/address/0xea7C998f2412c626331BC1d94D8EE433c7f99d29#code) |
 
-The [original verification screenshot](evidence/sepolia-verification-record.png) confirms
-MockUSDC and SimpleStablecoin were already verified on Etherscan. The
-[Vault Etherscan screenshot captured on 2026-10-06](evidence/vault-etherscan-verified-2026-10-06.png)
-confirms Source Code Verified / Exact Match for the Vault address above, using compiler
-`v0.8.24+commit.e11b9ed9`, optimizer 200 runs and EVM `cancun`. All three verification
-records are now present; no additional Vault verification or deployment is needed.
-
-On 2026-10-06, the [Sourcify query result](evidence/vault-source-match-2026-10-06.json)
-confirmed exact creation/runtime matches for Vault and that its registered source matches
-`src/Vault.sol`. [Live read-only calls](evidence/vault-live-checks-2026-10-06.txt) also confirmed
-the configured token addresses and Vault's minter role. Earlier automated Etherscan requests
-were blocked; the subsequent browser screenshot independently confirms Etherscan's status.
-
-| Item | Weight |
-|---|---|
-| Contract correctness + test coverage | 40% |
-| Deployment and Etherscan verification (Tier 2) | 20% |
-| Threat-model analysis (discussion questions) | 25% |
-| Code style and documentation | 15% |
-
-Submit:
-
-1. A link to your repo, with a screenshot of `forge test` passing
-2. Tier 2: Sepolia contract addresses + Etherscan links
-3. Your answers to the discussion questions in `STUDENT-QUESTIONS.md`
-4. An architecture diagram in your README — a photo of a hand drawing is fine
+Source verification is recorded in [the MockUSDC / sUSD screenshot](screenshoot/Tier2-USDC-sUSD-verified.png) and [the Vault screenshot](screenshoot/Tier2-Vault-verified.png).
 
 ---
 

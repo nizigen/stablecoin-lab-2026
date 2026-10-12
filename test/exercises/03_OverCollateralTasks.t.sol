@@ -9,13 +9,8 @@ import {MockPriceFeed} from "../../src/exercises/MockPriceFeed.sol";
 import {OverCollateralizedVault} from "../../src/exercises/OverCollateralizedVault.sol";
 
 /// @title Ex5 — over-collateralization + liquidation
-/// @notice These acceptance tests cover decimal conversion, collateral-ratio limits and
-///         liquidation in src/exercises/OverCollateralizedVault.sol.
-///
-///         Acceptance: make exercise.
-/// @dev Everything here turns on two numbers:
-///        price 2000e8  — 1 mWETH is worth $2000
-///        collateral 18 decimals / stablecoin 6 decimals — one conversion is 10^20
+/// @notice Tests for decimal conversion, collateral ratios, and liquidation.
+/// @dev The initial price is $2000. Collateral has 18 decimals, price 8, and debt 6.
 contract OverCollateralTasksTest is Test {
     MockWETH internal weth;
     SimpleStablecoin internal stable;
@@ -146,7 +141,7 @@ contract OverCollateralTasksTest is Test {
         vm.prank(alice);
         vault.mintStable(1000e6);
 
-        // alice sells her sUSD to bob in the open market, but her debt does not disappear with it
+        // Transferring the tokens to Bob does not repay Alice's debt.
         vm.prank(alice);
         stable.transfer(bob, 1000e6);
 
