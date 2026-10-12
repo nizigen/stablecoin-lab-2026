@@ -126,25 +126,7 @@ where to look when you get stuck.
 
 ### Architecture diagram
 
-```mermaid
-flowchart LR
-    User[User]
-    USDC[MockUSDC collateral]
-    Vault[Vault]
-    SUSD[SimpleStablecoin sUSD]
-    Admin[Admin / role holder]
-
-    User -- faucet / holds --> USDC
-    User -- approve + deposit USDC --> Vault
-    Vault -- transferFrom USDC --> USDC
-    Vault -- mint sUSD --> SUSD
-    SUSD -- balance to user --> User
-    User -- redeem sUSD --> Vault
-    Vault -- burn sUSD --> SUSD
-    Vault -- return USDC --> User
-    Admin -- grants MINTER_ROLE --> Vault
-    Admin -- may pause / grant roles --> SUSD
-```
+![Lab 1 hand-drawn architecture](screenshoot/Lab1-architecture-handdrawn.png)
 
 The backing invariant: **`vault.totalCollateral() >= stable.totalSupply()`**.
 
@@ -275,7 +257,7 @@ Exclude `.git/`, `out/`, `cache/`, `broadcast/`, `.env` and existing ZIP files. 
 
 ## Deployment (Sepolia)
 
-These three contracts were deployed on 2026-10-02. Paste their addresses and links into the Moodle text box, as required by Assignment Two.
+These three contracts were deployed on 2026-10-02.
 
 | Contract | Address / Etherscan source |
 | --- | --- |
